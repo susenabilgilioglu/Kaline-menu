@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kaline · Yönetim Paneli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --cream:#F2EAE0; --dark:#1a1a1a; --red:#C0392B; --brown:#6B4423; --border:rgba(107,68,35,0.16);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--cream);font-family:'Inter',sans-serif;color:var(--dark);min-height:100vh;}
+.brand{font-family:'Cormorant Garamond',Georgia,serif;font-weight:700;font-size:26px;letter-spacing:2px;text-transform:uppercase;color:var(--brown);}
+.brand-sub{font-size:13px;color:var(--brown);opacity:.7;margin-top:2px;}
+
+/* LOGIN */
+.login-view{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.login-card{background:#fff;border-radius:18px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 4px 24px rgba(0,0,0,0.10);text-align:center;}
+.login-card form{margin-top:20px;display:flex;flex-direction:column;gap:14px;text-align:left;}
+.login-card label{font-size:13px;color:var(--brown);display:flex;flex-direction:column;gap:6px;}
+
+input,textarea,select{font-family:'Inter',sans-serif;font-size:14px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--dark);width:100%;}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--brown);outline-offset:1px;}
+textarea{resize:vertical;}
+
+.btn-primary{background:var(--brown);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.btn-primary:disabled{opacity:.6;cursor:default;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--brown);border-radius:10px;padding:9px 14px;font-size:13px;cursor:pointer;}
+.btn-danger{background:transparent;border:1px solid rgba(192,57,43,0.3);color:var(--red);border-radius:10px;padding:9px 14px;font-size:13px;cursor:pointer;}
+.form-error{color:var(--red);font-size:13px;min-height:16px;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,0.06);position:sticky;top:0;z-index:10;flex-wrap:wrap;gap:12px;}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.tab-btn{background:transparent;border:none;padding:8px 14px;border-radius:20px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--brown);opacity:.55;cursor:pointer;}
+.tab-btn.active{opacity:1;background:var(--cream);}
+
+.content{max-width:840px;margin:0 auto;padding:24px 16px 60px;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.panel-header h2{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--dark);}
+
+.form-card{background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 2px 14px rgba(0,0,0,0.08);}
+.form-card h3{font-family:'Cormorant Garamond',serif;font-size:19px;margin-bottom:14px;color:var(--brown);}
+.form-card form{display:flex;flex-direction:column;gap:12px;}
+.form-card label{font-size:13px;color:var(--brown);display:flex;flex-direction:column;gap:6px;}
+.preview{width:90px;height:90px;object-fit:cover;border-radius:12px;background:var(--cream);}
+.preview.wide{width:100%;max-width:280px;height:140px;}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:4px;flex-wrap:wrap;}
+
+.group{margin-bottom:26px;}
+.group-title{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700;color:var(--brown);text-transform:uppercase;letter-spacing:1px;padding-bottom:8px;margin-bottom:12px;border-bottom:1.5px solid var(--brown);}
+.row-card{display:flex;align-items:center;gap:14px;background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 8px rgba(0,0,0,0.06);flex-wrap:wrap;}
+.thumb{width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--cream);}
+.row-info{flex:1;min-width:140px;}
+.row-title{font-size:14.5px;font-weight:600;}
+.row-desc{font-size:12px;color:#888;margin-top:2px;}
+.row-price{font-size:14px;color:var(--red);font-weight:600;white-space:nowrap;}
+.row-actions{display:flex;gap:8px;flex-shrink:0;margin-left:auto;}
+.empty{font-size:13px;color:#999;padding:10px 0;}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
+.banner-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+.banner-card img{width:100%;height:120px;object-fit:cover;display:block;}
+.banner-info{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+
+.emoji-badge{width:44px;height:44px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:100;max-width:90vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.error{background:var(--red);}
+
+@media (max-width:600px){
+  .row-card{flex-wrap:wrap;}
+  .row-actions{width:100%;justify-content:flex-end;margin-left:0;}
+  .topbar{flex-direction:column;align-items:stretch;}
+  .tabs{justify-content:center;}
+}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- ================= GİRİŞ EKRANI ================= -->
+<div id="login-view" class="login-view">
+  <div class="login-card">
+    <div class="brand">Kaline</div>
+    <div class="brand-sub">Yönetim Paneli</div>
+    <form id="login-form">
+      <label>E-posta
+        <input type="email" id="login-email" required autocomplete="username">
+      </label>
+      <label>Şifre
+        <input type="password" id="login-password" required autocomplete="current-password">
+      </label>
+      <p id="login-error" class="form-error"></p>
+      <button type="submit" id="login-btn" class="btn-primary">Giriş Yap</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= PANEL ================= -->
+<div id="app-view" style="display:none;">
+  <header class="topbar">
+    <div class="brand">Kaline</div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="menu">Menü</button>
+      <button class="tab-btn" data-tab="campaigns">Kampanyalar</button>
+      <button class="tab-btn" data-tab="games">Oyunlar</button>
+      <button class="tab-btn" data-tab="clubs">Öğrenci Kulüpleri</button>
+    </nav>
+    <button id="logout-btn" class="btn-ghost">Çıkış Yap</button>
+  </header>
+
+  <main class="content">
+
+    <!-- MENÜ ÜRÜNLERİ -->
+    <section id="panel-menu" class="tab-panel active">
+      <div class="panel-header">
+        <h2>Menü Ürünleri</h2>
+        <button id="add-item-btn" class="btn-primary">+ Yeni Ürün Ekle</button>
+      </div>
+
+      <div id="item-form" class="form-card" style="display:none;">
+        <h3 id="item-form-title">Yeni Ürün Ekle</h3>
+        <form id="item-form-el">
+          <label>Kategori
+            <select id="item-category"></select>
+          </label>
+          <div id="item-new-category-wrap" style="display:none;">
+            <label>Yeni Kategori Adı
+              <input type="text" id="item-new-category" placeholder="örn. Kahvaltılıklar">
+            </label>
+          </div>
+          <label>Ürün Adı
+            <input type="text" id="item-name" required>
+          </label>
+          <label>Açıklama (opsiyonel)
+            <textarea id="item-description" rows="2"></textarea>
+          </label>
+          <label>Fiyat (₺)
+            <input type="number" id="item-price" min="0" step="1" required>
+          </label>
+          <label>Görsel
+            <input type="file" id="item-image" accept="image/*">
+          </label>
+          <img id="item-image-preview" class="preview" alt="">
+          <div class="form-actions">
+            <button type="button" id="item-cancel-btn" class="btn-ghost">İptal</button>
+            <button type="submit" id="item-save-btn" class="btn-primary">Kaydet</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="menu-groups"></div>
+    </section>
+
+    <!-- KAMPANYALAR -->
+    <section id="panel-campaigns" class="tab-panel">
+      <div class="panel-header">
+        <h2>Kampanyalar</h2>
+        <button id="add-campaign-btn" class="btn-primary">+ Yeni Kampanya Ekle</button>
+      </div>
+
+      <div id="campaign-form" class="form-card" style="display:none;">
+        <h3 id="campaign-form-title">Yeni Kampanya Ekle</h3>
+        <form id="campaign-form-el">
+          <label>Başlık (opsiyonel)
+            <input type="text" id="campaign-title">
+          </label>
+          <label>Görsel
+            <input type="file" id="campaign-image" accept="image/*">
+          </label>
+          <img id="campaign-image-preview" class="preview wide" alt="">
+          <div class="form-actions">
+            <button type="button" id="campaign-cancel-btn" class="btn-ghost">İptal</button>
+            <button type="submit" id="campaign-save-btn" class="btn-primary">Kaydet</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="campaigns-grid" class="grid"></div>
+    </section>
+
+    <!-- OYUNLAR -->
+    <section id="panel-games" class="tab-panel">
+      <div class="panel-header">
+        <h2>Oyunlar</h2>
+        <button id="add-game-btn" class="btn-primary">+ Yeni Oyun Ekle</button>
+      </div>
+
+      <div id="game-form" class="form-card" style="display:none;">
+        <h3 id="game-form-title">Yeni Oyun Ekle</h3>
+        <form id="game-form-el">
+          <label>Oyun Adı
+            <input type="text" id="game-name" required>
+          </label>
+          <label>Görsel
+            <input type="file" id="game-image" accept="image/*">
+          </label>
+          <img id="game-image-preview" class="preview" alt="">
+          <div class="form-actions">
+            <button type="button" id="game-cancel-btn" class="btn-ghost">İptal</button>
+            <button type="submit" id="game-save-btn" class="btn-primary">Kaydet</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="games-list"></div>
+    </section>
+
+    <!-- ÖĞRENCİ KULÜPLERİ -->
+    <section id="panel-clubs" class="tab-panel">
+      <div class="panel-header">
+        <h2>Öğrenci Kulüpleri</h2>
+        <button id="add-club-btn" class="btn-primary">+ Yeni Kulüp Ekle</button>
+      </div>
+
+      <div id="club-form" class="form-card" style="display:none;">
+        <h3 id="club-form-title">Yeni Kulüp Ekle</h3>
+        <form id="club-form-el">
+          <label>Emoji
+            <input type="text" id="club-emoji" maxlength="4" value="🎓">
+          </label>
+          <label>Kulüp Adı
+            <input type="text" id="club-name" required>
+          </label>
+          <label>Açıklama (opsiyonel)
+            <textarea id="club-description" rows="2"></textarea>
+          </label>
+          <div class="form-actions">
+            <button type="button" id="club-cancel-btn" class="btn-ghost">İptal</button>
+            <button type="submit" id="club-save-btn" class="btn-primary">Kaydet</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="clubs-list"></div>
+    </section>
+
+  </main>
+
+  <p style="text-align:center;padding:8px 16px 20px;font-family:'Inter',sans-serif;font-size:9.5px;color:var(--brown);opacity:0.4;letter-spacing:0.2px;">Design &amp; Development — Su Sena Bilgilioğlu · <a href="https://www.linkedin.com/in/su-sena-bilgilio%C4%9Flu-1859003a0" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">LinkedIn</a></p>
+</div>
+
+<script type="module">
+/* =========================================================
+   AYARLAR — Bu iki değeri Supabase Project Settings > API
+   sayfasından kopyalayıp buraya yapıştır.
+   ========================================================= */
+const SUPABASE_URL = "https://fricajuiyszifxpvrjax.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_sE-jxeVGlxiHoFNLkpWWxw_7RerbTr7";
+const BUCKET = "kafe-gorseller";
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let cafeId = null;
+let categories = [];
+let menuItems = [];
+let campaigns = [];
+let games = [];
+let clubs = [];
+const editing = { item: null, campaign: null, game: null, club: null };
+
+/* ---------- yardımcılar ---------- */
+function $(sel, root = document) { return root.querySelector(sel); }
+function $all(sel, root = document) { return Array.from(root.querySelectorAll(sel)); }
+
+function escapeHtml(str) {
+  return (str ?? "").toString().replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+let toastTimer = null;
+function toast(msg, isError) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.toggle("error", !!isError);
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+function placeholderImg() {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="70" height="70"><rect width="70" height="70" fill="%23F2EAE0"/></svg>';
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
+
+function fileToPreview(file, imgEl) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => { imgEl.src = e.target.result; };
+  reader.readAsDataURL(file);
+}
+
+async function uploadImage(file, folder) {
+  if (!file) return null;
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const path = folder + "/" + Date.now() + "." + ext;
+  const { error } = await sb.storage.from(BUCKET).upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+/* ---------- giriş / çıkış ---------- */
+(async function start() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) enterApp(); else showLogin();
+})();
+
+sb.auth.onAuthStateChange((event) => {
+  if (event === "SIGNED_IN") enterApp();
+  if (event === "SIGNED_OUT") showLogin();
+});
+
+$("#login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = $("#login-email").value.trim();
+  const password = $("#login-password").value;
+  const btn = $("#login-btn");
+  btn.disabled = true; btn.textContent = "Giriş yapılıyor...";
+  $("#login-error").textContent = "";
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = "Giriş Yap";
+  if (error) $("#login-error").textContent = "E-posta veya şifre hatalı.";
+});
+
+$("#logout-btn").addEventListener("click", () => sb.auth.signOut());
+
+function showLogin() {
+  $("#login-view").style.display = "flex";
+  $("#app-view").style.display = "none";
+}
+
+async function enterApp() {
+  $("#login-view").style.display = "none";
+  $("#app-view").style.display = "block";
+  await loadAll();
+}
+
+/* ---------- sekme geçişi ---------- */
+$all(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    $all(".tab-btn").forEach(b => b.classList.remove("active"));
+    $all(".tab-panel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    $("#panel-" + btn.dataset.tab).classList.add("active");
+  });
+});
+
+/* ---------- tüm veriyi yükle ---------- */
+async function loadAll() {
+  try {
+    const { data: cafe, error: cafeErr } = await sb.from("cafes").select("id").limit(1).single();
+    if (cafeErr) throw cafeErr;
+    cafeId = cafe.id;
+
+    const [catsRes, itemsRes, campsRes, gamesRes, clubsRes] = await Promise.all([
+      sb.from("categories").select("*").eq("cafe_id", cafeId).order("sort_order"),
+      sb.from("menu_items").select("*").eq("cafe_id", cafeId).order("sort_order"),
+      sb.from("campaign_banners").select("*").eq("cafe_id", cafeId).order("sort_order"),
+      sb.from("games").select("*").eq("cafe_id", cafeId).order("sort_order"),
+      sb.from("student_clubs").select("*").eq("cafe_id", cafeId).order("sort_order"),
+    ]);
+
+    categories = catsRes.data || [];
+    menuItems = itemsRes.data || [];
+    campaigns = campsRes.data || [];
+    games = gamesRes.data || [];
+    clubs = clubsRes.data || [];
+
+    renderMenuPanel();
+    renderCampaignsPanel();
+    renderGamesPanel();
+    renderClubsPanel();
+  } catch (err) {
+    console.error(err);
+    toast("Veriler yüklenirken hata oluştu.", true);
+  }
+}
+
+/* =========================================================
+   MENÜ ÜRÜNLERİ
+   ========================================================= */
+function populateCategorySelect() {
+  const sel = $("#item-category");
+  sel.innerHTML = categories.map(c =>
+    '<option value="' + c.id + '">' + escapeHtml(c.name) + "</option>"
+  ).join("") + '<option value="__new__">+ Yeni kategori...</option>';
+}
+
+$("#item-category").addEventListener("change", (e) => {
+  $("#item-new-category-wrap").style.display = e.target.value === "__new__" ? "block" : "none";
+});
+$("#item-image").addEventListener("change", (e) => fileToPreview(e.target.files[0], $("#item-image-preview")));
+
+function renderMenuPanel() {
+  populateCategorySelect();
+  const container = $("#menu-groups");
+  if (categories.length === 0) {
+    container.innerHTML = '<p class="empty">Henüz kategori yok.</p>';
+    return;
+  }
+  container.innerHTML = categories.map(cat => {
+    const itemsInCat = menuItems.filter(i => i.category_id === cat.id);
+    const rows = itemsInCat.length === 0
+      ? '<p class="empty">Bu kategoride ürün yok.</p>'
+      : itemsInCat.map(item => (
+          '<div class="row-card">' +
+            '<img class="thumb" src="' + (item.image_url || placeholderImg()) + '" alt="">' +
+            '<div class="row-info">' +
+              '<div class="row-title">' + escapeHtml(item.name) + "</div>" +
+              (item.description ? '<div class="row-desc">' + escapeHtml(item.description) + "</div>" : "") +
+            "</div>" +
+            '<div class="row-price">' + Number(item.price).toLocaleString("tr-TR") + " ₺</div>" +
+            '<div class="row-actions">' +
+              '<button class="btn-ghost" data-action="edit-item" data-id="' + item.id + '">Düzenle</button>' +
+              '<button class="btn-danger" data-action="delete-item" data-id="' + item.id + '">Sil</button>' +
+            "</div>" +
+          "</div>"
+        )).join("");
+    return '<div class="group"><div class="group-title">' + escapeHtml(cat.name) + "</div>" + rows + "</div>";
+  }).join("");
+}
+
+$("#menu-groups").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+  if (btn.dataset.action === "edit-item") openItemForm(btn.dataset.id);
+  if (btn.dataset.action === "delete-item") deleteItem(btn.dataset.id);
+});
+
+$("#add-item-btn").addEventListener("click", () => openItemForm(null));
+$("#item-cancel-btn").addEventListener("click", closeItemForm);
+
+function openItemForm(id) {
+  editing.item = id;
+  $("#item-form").style.display = "block";
+  $("#item-form-title").textContent = id ? "Ürünü Düzenle" : "Yeni Ürün Ekle";
+  $("#item-new-category-wrap").style.display = "none";
+  $("#item-new-category").value = "";
+  $("#item-image").value = "";
+  if (id) {
+    const item = menuItems.find(i => i.id === id);
+    $("#item-category").value = item.category_id;
+    $("#item-name").value = item.name;
+    $("#item-description").value = item.description || "";
+    $("#item-price").value = item.price;
+    $("#item-image-preview").src = item.image_url || placeholderImg();
+  } else {
+    $("#item-form-el").reset();
+    $("#item-image-preview").src = placeholderImg();
+    if (categories[0]) $("#item-category").value = categories[0].id;
+  }
+  $("#item-form").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function closeItemForm() {
+  $("#item-form").style.display = "none";
+  editing.item = null;
+}
+
+$("#item-form-el").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const saveBtn = $("#item-save-btn");
+  saveBtn.disabled = true; saveBtn.textContent = "Kaydediliyor...";
+  try {
+    let categoryId = $("#item-category").value;
+    if (categoryId === "__new__") {
+      const newName = $("#item-new-category").value.trim();
+      if (!newName) throw new Error("Kategori adı gerekli.");
+      const { data, error } = await sb.from("categories")
+        .insert([{ cafe_id: cafeId, name: newName, sort_order: categories.length + 1 }])
+        .select().single();
+      if (error) throw error;
+      categoryId = data.id;
+    }
+
+    const name = $("#item-name").value.trim();
+    const description = $("#item-description").value.trim();
+    const price = Number($("#item-price").value);
+    if (!name || !price) throw new Error("Ürün adı ve fiyat gerekli.");
+
+    const file = $("#item-image").files[0];
+    const imageUrl = file ? await uploadImage(file, "urunler") : undefined;
+
+    const payload = { cafe_id: cafeId, category_id: categoryId, name: name, description: description || null, price: price };
+    if (imageUrl) payload.image_url = imageUrl;
+
+    if (editing.item) {
+      const { error } = await sb.from("menu_items").update(payload).eq("id", editing.item);
+      if (error) throw error;
+      toast("Ürün güncellendi.");
+    } else {
+      payload.sort_order = menuItems.filter(i => i.category_id === categoryId).length + 1;
+      const { error } = await sb.from("menu_items").insert([payload]);
+      if (error) throw error;
+      toast("Ürün eklendi.");
+    }
+    closeItemForm();
+    await loadAll();
+  } catch (err) {
+    console.error(err);
+    toast(err.message || "Bir hata oluştu.", true);
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = "Kaydet";
+  }
+});
+
+async function deleteItem(id) {
+  const item = menuItems.find(i => i.id === id);
+  if (!confirm('"' + (item ? item.name : "Bu ürünü") + '" silmek istiyor musun?')) return;
+  const { error } = await sb.from("menu_items").delete().eq("id", id);
+  if (error) { toast("Silinemedi.", true); return; }
+  toast("Ürün silindi.");
+  await loadAll();
+}
+
+/* =========================================================
+   KAMPANYALAR
+   ========================================================= */
+function renderCampaignsPanel() {
+  const container = $("#campaigns-grid");
+  if (campaigns.length === 0) {
+    container.innerHTML = '<p class="empty">Henüz kampanya eklenmedi.</p>';
+    return;
+  }
+  container.innerHTML = campaigns.map(c => (
+    '<div class="banner-card">' +
+      '<img src="' + (c.image_url || placeholderImg()) + '" alt="">' +
+      '<div class="banner-info">' +
+        '<div class="row-title">' + escapeHtml(c.title || "İsimsiz Kampanya") + "</div>" +
+        '<div class="row-actions">' +
+          '<button class="btn-ghost" data-action="edit-campaign" data-id="' + c.id + '">Düzenle</button>' +
+          '<button class="btn-danger" data-action="delete-campaign" data-id="' + c.id + '">Sil</button>' +
+        "</div>" +
+      "</div>" +
+    "</div>"
+  )).join("");
+}
+
+$("#campaigns-grid").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+  if (btn.dataset.action === "edit-campaign") openCampaignForm(btn.dataset.id);
+  if (btn.dataset.action === "delete-campaign") deleteCampaign(btn.dataset.id);
+});
+
+$("#add-campaign-btn").addEventListener("click", () => openCampaignForm(null));
+$("#campaign-cancel-btn").addEventListener("click", closeCampaignForm);
+$("#campaign-image").addEventListener("change", (e) => fileToPreview(e.target.files[0], $("#campaign-image-preview")));
+
+function openCampaignForm(id) {
+  editing.campaign = id;
+  $("#campaign-form").style.display = "block";
+  $("#campaign-form-title").textContent = id ? "Kampanyayı Düzenle" : "Yeni Kampanya Ekle";
+  $("#campaign-image").value = "";
+  if (id) {
+    const c = campaigns.find(x => x.id === id);
+    $("#campaign-title").value = c.title || "";
+    $("#campaign-image-preview").src = c.image_url || placeholderImg();
+  } else {
+    $("#campaign-form-el").reset();
+    $("#campaign-image-preview").src = placeholderImg();
+  }
+  $("#campaign-form").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function closeCampaignForm() {
+  $("#campaign-form").style.display = "none";
+  editing.campaign = null;
+}
+
+$("#campaign-form-el").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = $("#campaign-save-btn");
+  btn.disabled = true; btn.textContent = "Kaydediliyor...";
+  try {
+    const file = $("#campaign-image").files[0];
+    if (!editing.campaign && !file) throw new Error("Lütfen bir görsel seç.");
+    const imageUrl = file ? await uploadImage(file, "kampanyalar") : undefined;
+    const payload = { cafe_id: cafeId, title: $("#campaign-title").value.trim() || null };
+    if (imageUrl) payload.image_url = imageUrl;
+
+    if (editing.campaign) {
+      const { error } = await sb.from("campaign_banners").update(payload).eq("id", editing.campaign);
+      if (error) throw error;
+      toast("Kampanya güncellendi.");
+    } else {
+      payload.sort_order = campaigns.length + 1;
+      payload.is_active = true;
+      const { error } = await sb.from("campaign_banners").insert([payload]);
+      if (error) throw error;
+      toast("Kampanya eklendi.");
+    }
+    closeCampaignForm();
+    await loadAll();
+  } catch (err) {
+    console.error(err);
+    toast(err.message || "Bir hata oluştu.", true);
+  } finally {
+    btn.disabled = false; btn.textContent = "Kaydet";
+  }
+});
+
+async function deleteCampaign(id) {
+  const c = campaigns.find(x => x.id === id);
+  if (!confirm('"' + (c && c.title ? c.title : "Bu kampanyayı") + '" silmek istiyor musun?')) return;
+  const { error } = await sb.from("campaign_banners").delete().eq("id", id);
+  if (error) { toast("Silinemedi.", true); return; }
+  toast("Kampanya silindi.");
+  await loadAll();
+}
+
+/* =========================================================
+   OYUNLAR
+   ========================================================= */
+function renderGamesPanel() {
+  const container = $("#games-list");
+  if (games.length === 0) {
+    container.innerHTML = '<p class="empty">Henüz oyun eklenmedi.</p>';
+    return;
+  }
+  container.innerHTML = games.map(g => (
+    '<div class="row-card">' +
+      '<img class="thumb" src="' + (g.image_url || placeholderImg()) + '" alt="">' +
+      '<div class="row-info"><div class="row-title">' + escapeHtml(g.name) + "</div></div>" +
+      '<div class="row-actions">' +
+        '<button class="btn-ghost" data-action="edit-game" data-id="' + g.id + '">Düzenle</button>' +
+        '<button class="btn-danger" data-action="delete-game" data-id="' + g.id + '">Sil</button>' +
+      "</div>" +
+    "</div>"
+  )).join("");
+}
+
+$("#games-list").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+  if (btn.dataset.action === "edit-game") openGameForm(btn.dataset.id);
+  if (btn.dataset.action === "delete-game") deleteGame(btn.dataset.id);
+});
+
+$("#add-game-btn").addEventListener("click", () => openGameForm(null));
+$("#game-cancel-btn").addEventListener("click", closeGameForm);
+$("#game-image").addEventListener("change", (e) => fileToPreview(e.target.files[0], $("#game-image-preview")));
+
+function openGameForm(id) {
+  editing.game = id;
+  $("#game-form").style.display = "block";
+  $("#game-form-title").textContent = id ? "Oyunu Düzenle" : "Yeni Oyun Ekle";
+  $("#game-image").value = "";
+  if (id) {
+    const g = games.find(x => x.id === id);
+    $("#game-name").value = g.name;
+    $("#game-image-preview").src = g.image_url || placeholderImg();
+  } else {
+    $("#game-form-el").reset();
+    $("#game-image-preview").src = placeholderImg();
+  }
+  $("#game-form").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function closeGameForm() {
+  $("#game-form").style.display = "none";
+  editing.game = null;
+}
+
+$("#game-form-el").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = $("#game-save-btn");
+  btn.disabled = true; btn.textContent = "Kaydediliyor...";
+  try {
+    const name = $("#game-name").value.trim();
+    if (!name) throw new Error("Oyun adı gerekli.");
+    const file = $("#game-image").files[0];
+    const imageUrl = file ? await uploadImage(file, "oyunlar") : undefined;
+    const payload = { cafe_id: cafeId, name: name };
+    if (imageUrl) payload.image_url = imageUrl;
+
+    if (editing.game) {
+      const { error } = await sb.from("games").update(payload).eq("id", editing.game);
+      if (error) throw error;
+      toast("Oyun güncellendi.");
+    } else {
+      payload.sort_order = games.length + 1;
+      const { error } = await sb.from("games").insert([payload]);
+      if (error) throw error;
+      toast("Oyun eklendi.");
+    }
+    closeGameForm();
+    await loadAll();
+  } catch (err) {
+    console.error(err);
+    toast(err.message || "Bir hata oluştu.", true);
+  } finally {
+    btn.disabled = false; btn.textContent = "Kaydet";
+  }
+});
+
+async function deleteGame(id) {
+  const g = games.find(x => x.id === id);
+  if (!confirm('"' + (g ? g.name : "Bu oyunu") + '" silmek istiyor musun?')) return;
+  const { error } = await sb.from("games").delete().eq("id", id);
+  if (error) { toast("Silinemedi.", true); return; }
+  toast("Oyun silindi.");
+  await loadAll();
+}
+
+/* =========================================================
+   ÖĞRENCİ KULÜPLERİ
+   ========================================================= */
+function renderClubsPanel() {
+  const container = $("#clubs-list");
+  if (clubs.length === 0) {
+    container.innerHTML = '<p class="empty">Henüz kulüp eklenmedi.</p>';
+    return;
+  }
+  container.innerHTML = clubs.map(c => (
+    '<div class="row-card">' +
+      '<div class="emoji-badge">' + escapeHtml(c.icon || "🎓") + "</div>" +
+      '<div class="row-info">' +
+        '<div class="row-title">' + escapeHtml(c.name) + "</div>" +
+        (c.description ? '<div class="row-desc">' + escapeHtml(c.description) + "</div>" : "") +
+      "</div>" +
+      '<div class="row-actions">' +
+        '<button class="btn-ghost" data-action="edit-club" data-id="' + c.id + '">Düzenle</button>' +
+        '<button class="btn-danger" data-action="delete-club" data-id="' + c.id + '">Sil</button>' +
+      "</div>" +
+    "</div>"
+  )).join("");
+}
+
+$("#clubs-list").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+  if (btn.dataset.action === "edit-club") openClubForm(btn.dataset.id);
+  if (btn.dataset.action === "delete-club") deleteClub(btn.dataset.id);
+});
+
+$("#add-club-btn").addEventListener("click", () => openClubForm(null));
+$("#club-cancel-btn").addEventListener("click", closeClubForm);
+
+function openClubForm(id) {
+  editing.club = id;
+  $("#club-form").style.display = "block";
+  $("#club-form-title").textContent = id ? "Kulübü Düzenle" : "Yeni Kulüp Ekle";
+  if (id) {
+    const c = clubs.find(x => x.id === id);
+    $("#club-emoji").value = c.icon || "🎓";
+    $("#club-name").value = c.name;
+    $("#club-description").value = c.description || "";
+  } else {
+    $("#club-form-el").reset();
+    $("#club-emoji").value = "🎓";
+  }
+  $("#club-form").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function closeClubForm() {
+  $("#club-form").style.display = "none";
+  editing.club = null;
+}
+
+$("#club-form-el").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = $("#club-save-btn");
+  btn.disabled = true; btn.textContent = "Kaydediliyor...";
+  try {
+    const name = $("#club-name").value.trim();
+    if (!name) throw new Error("Kulüp adı gerekli.");
+    const payload = {
+      cafe_id: cafeId,
+      name: name,
+      icon: $("#club-emoji").value.trim() || "🎓",
+      description: $("#club-description").value.trim() || null
+    };
+
+    if (editing.club) {
+      const { error } = await sb.from("student_clubs").update(payload).eq("id", editing.club);
+      if (error) throw error;
+      toast("Kulüp güncellendi.");
+    } else {
+      payload.sort_order = clubs.length + 1;
+      const { error } = await sb.from("student_clubs").insert([payload]);
+      if (error) throw error;
+      toast("Kulüp eklendi.");
+    }
+    closeClubForm();
+    await loadAll();
+  } catch (err) {
+    console.error(err);
+    toast(err.message || "Bir hata oluştu.", true);
+  } finally {
+    btn.disabled = false; btn.textContent = "Kaydet";
+  }
+});
+
+async function deleteClub(id) {
+  const c = clubs.find(x => x.id === id);
+  if (!confirm('"' + (c ? c.name : "Bu kulübü") + '" silmek istiyor musun?')) return;
+  const { error } = await sb.from("student_clubs").delete().eq("id", id);
+  if (error) { toast("Silinemedi.", true); return; }
+  toast("Kulüp silindi.");
+  await loadAll();
+}
+</script>
+</body>
+</html>
