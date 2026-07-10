@@ -297,6 +297,11 @@ function switchTab(id,btn){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
+  const tabsWrap=document.querySelector('.tabs-wrap');
+  if(tabsWrap){
+    const y=tabsWrap.getBoundingClientRect().top+window.pageYOffset-8;
+    window.scrollTo({top:y,behavior:'smooth'});
+  }
 }
 (function(){
   const container=document.getElementById('petalContainer');
